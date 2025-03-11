@@ -22,9 +22,9 @@ def build_model(input_shape):
     ])
 
     # Compilar el modelo
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
-                  loss="mse",
-                  metrics=["mae", "mse"])  # Se usan MAE y MSE como métricas
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+              loss=tf.keras.losses.MeanSquaredError(),
+              metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanSquaredError()])
 
     return model
 
