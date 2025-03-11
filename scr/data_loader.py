@@ -93,5 +93,6 @@ if __name__ == "__main__":
     processed_df = load_and_preprocess_data()
     if processed_df is not None:
         print(processed_df.head())
+        print(processed_df.columns)
 
 
