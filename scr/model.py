@@ -4,28 +4,26 @@ from tensorflow.keras import layers
 
 def build_model(input_shape):
     """
-    Construye una red neuronal para predecir el precio de alquiler.
-    
-    Args:
-        input_shape (int): Número de características de entrada.
-    
-    Returns:
-        keras.Model: Modelo de Keras compilado.
+    Construye una red neuronal mejorada para predecir el precio de alquiler.
     """
+
     model = keras.Sequential([
-        layers.Dense(128, activation="relu", input_shape=(input_shape,)),
-        layers.Dropout(0.2),  # Regularización para evitar overfitting
-        layers.Dense(64, activation="relu"),
-        layers.Dropout(0.2),
-        layers.Dense(32, activation="relu"),
-        layers.Dense(1, activation="linear")  # Salida para regresión
+        layers.Dense(256, input_shape=(input_shape,)),
+        layers.LeakyReLU(alpha=0.1),  # Permite que los gradientes fluyan mejor
+        layers.Dropout(0.3),
+        layers.Dense(128),
+        layers.LeakyReLU(alpha=0.1),
+        layers.Dropout(0.3),
+        layers.Dense(64),
+        layers.LeakyReLU(alpha=0.1),
+        layers.Dense(1, activation="linear")  # Regresión, salida sin activación
     ])
 
-    # Compilar el modelo
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-              loss=tf.keras.losses.MeanSquaredError(),
-              metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanSquaredError()])
-
+    # Compilar el modelo con una tasa de aprendizaje mayor
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.005),  
+                  loss="mse",
+                  metrics=["mae", "mse"])
+    
     return model
 
 # Prueba el modelo si se ejecuta directamente el script
@@ -36,3 +34,4 @@ if __name__ == "__main__":
 
     # Mostrar resumen del modelo
     model.summary()
+
