@@ -123,7 +123,7 @@ def predict_from_file(file_path=None, model_path='models/best_model_checkpoint.h
     # Si no se proporciona ruta al archivo, pedir selección
     if file_path is None:
         file_path = select_file(title="Selecciona el archivo con datos para predicción",
-                               filetypes=[("Archivos CSV", "*.csv"), ("Archivos Excel", "*.xlsx")])
+                               filetypes=[("Archivos CSV", "*.csv")])
         if not file_path:
             print("No se seleccionó ningún archivo. Saliendo...")
             return None
