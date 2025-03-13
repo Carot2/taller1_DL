@@ -12,7 +12,7 @@ Este proyecto implementa un modelo de red neuronal para predecir el precio de al
    - [Análisis de características y preprocesamiento](#análisis-de-las-características-y-preprocesamiento-de-datos)
 3. [Implementación de la red neuronal](#implementación-de-la-red-neuronal)
 4. [Estructuración del repositorio](#estructuración-del-repositorio)
-5. [Instrucciones de uso](#instrucciones-de-uso)
+5. [Instrucciones de uso](#instrucciones-de-uso-de-la-red-neuronal-y-rendimiento-obtenido)
    - [Requisitos previos](#requisitos-previos)
    - [Instalación](#instalación)
    - [Cómo entrenar el modelo](#cómo-entrenar-el-modelo-desde-trainpy)
