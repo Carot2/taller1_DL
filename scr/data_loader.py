@@ -20,8 +20,8 @@ def load_and_preprocess_data():
     """
 
     # SELECCIONAR EL ARCHIVO
-    # file_path = select_file()
-    file_path = "C:/Users/USER/Downloads/House_Rent_Dataset.csv"
+    file_path = select_file()
+    #file_path = "C:/Users/USER/Downloads/House_Rent_Dataset.csv"
 
     if not file_path:
         print("❌ No se seleccionó ningún archivo. Saliendo...")

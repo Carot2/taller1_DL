@@ -6,3 +6,4 @@ tabulate
 statsmodels
 seaborn
 plotly
+tensorflow
