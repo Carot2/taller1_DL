@@ -6,7 +6,7 @@ import joblib
 import argparse
 import tkinter as tk
 from tkinter import filedialog
-from dataloader import preprocess_data, extract_floor_info
+from data_loader import preprocess_data, extract_floor_info
 
 def select_file(title="Selecciona un archivo", filetypes=(("Archivos CSV", "*.csv"),)):
     """ Abre una ventana de selección de archivos y devuelve la ruta del archivo seleccionado. """
