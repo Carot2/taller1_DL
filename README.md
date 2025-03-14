@@ -342,14 +342,6 @@ Ejemplo:
 
 > - Asegúrese de que el formato de los datos sea consistente con el conjunto de datos de entrenamiento.
 
-#### Guardando los resultados
-
-Para guardar los resultados en un archivo, puede utilizar el parámetro `--output`:
-
-```bash
-python src/predict.py --output resultados_predicciones.csv
-```
-
 #### Ejemplo de archivo de predicción
 
 Hemos proporcionado un archivo de ejemplo `data/ejemplo_prediccion.csv` que puede utilizar como plantilla para sus propios datos:
@@ -358,9 +350,6 @@ Hemos proporcionado un archivo de ejemplo `data/ejemplo_prediccion.csv` que pued
 2. Complete las columnas con los datos de las propiedades que desea predecir
 3. Guarde el archivo con un nuevo nombre
 4. Utilice este archivo al ejecutar `predict.py`
-
-El script generará un nuevo archivo que incluirá todas las columnas originales más una columna adicional `Rent_Predicted` con los precios de alquiler predichos.
-
 
 ## ⚡️ Rendimiento obtenido
 

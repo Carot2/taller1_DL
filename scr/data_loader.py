@@ -1,16 +1,58 @@
+
 import pandas as pd
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+import warnings
+warnings.filterwarnings('ignore')
 
 def select_file():
     """ Abre una ventana de selección de archivos y devuelve la ruta del archivo seleccionado. """
     root = tk.Tk()
     root.withdraw()  # Ocultar la ventana principal de Tkinter
     file_path = filedialog.askopenfilename(title="Selecciona el archivo de datos",
-                                           filetypes=[("Archivos Excel", "*.xlsx"), ("Archivos CSV", "*.csv")])
+                                           filetypes=[("Archivos CSV", "*.csv")])
     return file_path
+
+def extract_floor_info(floor_str):
+    """
+    Extrae información del piso y total de pisos.
+    Retorna: (número_de_piso, total_de_pisos)
+    """
+    try:
+        floor_str = str(floor_str).strip()
+
+        # Procesar valores especiales
+        if "Upper Basement" in floor_str:
+            floor_num = -1
+        elif "Lower Basement" in floor_str:
+            floor_num = -2
+        elif "Ground" in floor_str:
+            floor_num = 0
+        else:
+            # Extraer número de piso
+            parts = floor_str.split("out of")
+            if len(parts) > 0 and parts[0].strip().isdigit():
+                floor_num = int(parts[0].strip())
+            else:
+                floor_num = None
+
+        # Extraer total de pisos
+        if "out of" in floor_str:
+            parts = floor_str.split("out of")
+            if len(parts) > 1 and parts[1].strip().isdigit():
+                total_floors = int(parts[1].strip())
+            else:
+                total_floors = None
+        else:
+            total_floors = None
+
+        return floor_num, total_floors
+    except:
+        return None, None
 
 def load_and_preprocess_data():
     """
@@ -36,56 +78,118 @@ def load_and_preprocess_data():
         df = pd.read_excel(file_path)
     else:
         raise ValueError("❌ Formato de archivo no soportado. Usa .csv o .xlsx")
-
-    # 🔹 Verificar valores NaN antes del preprocesamiento
-    print(f"⚠️ Valores NaN antes del preprocesamiento: {df.isna().sum().sum()}")
-
-    # Convertir la columna 'Posted On' a tipo datetime y extraer el mes (el año se elimina)
-    df["Posted On"] = pd.to_datetime(df["Posted On"], dayfirst=True, errors="coerce")
-    df["Month"] = df["Posted On"].dt.month
-    df.drop(columns=["Posted On"], inplace=True)  # Eliminar columna original
-
-    # Extraer el número de piso y el total de pisos de la columna 'Floor'
-    def extract_floor_info(floor_str):
-        parts = str(floor_str).split(" out of ")
-        floor_num = 0 if parts[0] == "Ground" else int(parts[0]) if parts[0].isdigit() else np.nan
-        total_floors = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else np.nan
-        return floor_num, total_floors
-
-    df[["Floor_Number", "Total_Floors"]] = df["Floor"].apply(lambda x: pd.Series(extract_floor_info(x)))
-    df.drop(columns=["Floor"], inplace=True)  # Eliminar columna original
-
-    # Convertir 'Furnishing Status' en variables dummies
-    df = pd.get_dummies(df, columns=["Furnishing Status"], prefix="Furnish")
-
-    # Convertir 'Area Type' en variables dummies
-    df = pd.get_dummies(df, columns=["Area Type"], prefix="Area")
-
-    # **Manejo de 'City'**
-    if df["City"].nunique() > 1:  # Solo si hay más de una ciudad
-        df = pd.get_dummies(df, columns=["City"], prefix="City")
-
-    # 🔹 ELIMINAR COLUMNAS IRRELEVANTES
-    df.drop(columns=["Tenant Preferred", "Area Locality", "Point of Contact"], inplace=True)
-
-    # 🔹 Manejo de valores NaN: Eliminación o Imputación
-    df.dropna(inplace=True)  # 🔹 Opción 1: Eliminar filas con NaN
-    # Alternativa: df.fillna(df.mean(), inplace=True)  # 🔹 Opción 2: Reemplazar con la media
-
-    # Verificar que no haya valores NaN después del preprocesamiento
-    print(f"✅ Filas con NaN eliminadas. Total de filas ahora: {df.shape[0]}")
+    return df    
+def preprocess_data(df):
+    """
+    Realiza el preprocesamiento completo del dataset.
     
-    # Normalizar variables numéricas
-    num_cols = ["BHK", "Rent", "Size", "Bathroom", "Floor_Number", "Total_Floors", "Month"]
-    scaler = StandardScaler()
-    df[num_cols] = scaler.fit_transform(df[num_cols])
+    Args:
+        df: DataFrame con los datos crudos
+        
+    Returns:
+        X, y, y_original: Features y target en forma logarítmica y original
+        preprocessor: Objeto ColumnTransformer entrenado
+    """
+    if df is None:
+        return None, None, None, None
+    
+    print("=== Preprocesando datos ===")
+    
+    # Filtrar registros con categorías poco frecuentes
+    df_proc = df[(df['Area Type'] != 'Built Area') &
+                 (df['Point of Contact'] != 'Contact Builder')].copy()
+    
+    print(f"Dimensiones después de filtrado: {df_proc.shape}")
+    
+    # Procesar fechas
+    df_proc["Posted On"] = pd.to_datetime(df_proc["Posted On"], dayfirst=True, errors="coerce")
+    df_proc["Month"] = df_proc["Posted On"].dt.month
+    
+    # Procesar pisos
+    df_proc[['Floor_Number', 'Total_Floors']] = df_proc['Floor'].apply(
+        lambda x: pd.Series(extract_floor_info(x))
+    )
+    
+    # Calcular ratio de pisos
+    df_proc['Floor_Ratio'] = None
+    mask = (~df_proc['Floor_Number'].isna()) & (~df_proc['Total_Floors'].isna()) & (df_proc['Total_Floors'] > 0)
+    df_proc.loc[mask, 'Floor_Ratio'] = df_proc.loc[mask, 'Floor_Number'] / df_proc.loc[mask, 'Total_Floors']
+    
+    # Rellenar valores nulos en columnas de pisos
+    df_proc['Floor_Number'] = df_proc['Floor_Number'].fillna(df_proc['Floor_Number'].median())
+    df_proc['Total_Floors'] = df_proc['Total_Floors'].fillna(df_proc['Total_Floors'].median())
+    df_proc['Floor_Ratio'] = df_proc['Floor_Ratio'].fillna(df_proc['Floor_Ratio'].median())
+    
+    # Transformaciones logarítmicas
+    df_proc['Rent_log'] = np.log(df_proc['Rent'])
+    df_proc['Size_log'] = np.log(df_proc['Size'])
+    
+    # Codificar variables categóricas
+    df_proc = pd.get_dummies(df_proc, columns=["Furnishing Status"], prefix="Furnish")
+    df_proc = pd.get_dummies(df_proc, columns=["Area Type"], prefix="Area")
+    
+    # Si hay múltiples ciudades, convertir a dummies
+    if df_proc["City"].nunique() > 1:
+        df_proc = pd.get_dummies(df_proc, columns=["City"], prefix="City")
+    
+    # Eliminar columnas innecesarias
+    columnas_a_eliminar = ['Posted On', 'Area Locality', 'Floor', 'Tenant Preferred', 'Point of Contact']
+    X = df_proc.drop(columns=columnas_a_eliminar + ['Rent', 'Rent_log']).copy()
+    y = df_proc['Rent_log'].copy()
+    y_original = df_proc['Rent'].copy()
+    
+    # Manejar valores nulos restantes
+    for col in X.columns:
+        if X[col].isna().any():
+            if X[col].dtype.kind in 'ifc':  # Numérico
+                X[col] = X[col].fillna(X[col].median())
+            else:  # Categórico
+                X[col] = X[col].fillna(X[col].mode()[0])
+    
+    print(f"✅ Preprocesamiento completado. Features: {X.shape[1]}")
+    return X, y, y_original
 
-    print("✅ Preprocesamiento completado con éxito.")
-    return df
+def prepare_train_test_data(X, y, y_original, test_size=0.2, random_state=42):
+    """
+    Divide los datos en conjuntos de entrenamiento y prueba, y aplica escalado.
+    
+    Returns:
+        Conjuntos de datos preparados y el preprocesador
+    """
+    # División en train/test
+    X_train, X_test, y_train, y_test, y_train_original, y_test_original = train_test_split(
+        X, y, y_original, test_size=test_size, random_state=random_state
+    )
+    
+    # Identificar tipos de columnas
+    cat_cols = X.select_dtypes(include=['object', 'category']).columns.tolist()
+    num_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    
+    # Preprocesador para escalado y codificación
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', StandardScaler(), num_cols),
+            ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols)
+        ]
+    )
+    
+    # Aplicar preprocesamiento
+    preprocessor.fit(X_train)
+    X_train_prep = preprocessor.transform(X_train)
+    X_test_prep = preprocessor.transform(X_test)
+    
+    # Verificar y manejar NaN
+    if np.isnan(X_train_prep).any() or np.isnan(X_test_prep).any():
+        X_train_prep = np.nan_to_num(X_train_prep)
+        X_test_prep = np.nan_to_num(X_test_prep)
+    
+    return X_train_prep, X_test_prep, y_train, y_test, y_train_original, y_test_original, preprocessor
 
-# 🔹 Muestra de dataset:
 if __name__ == "__main__":
-    processed_df = load_and_preprocess_data()
-    if processed_df is not None:
-        print(processed_df.head())
-        print(processed_df.columns)
+    # Ejemplo de uso
+    df = load_and_preprocess_data()
+    if df is not None:
+        X, y, y_original = preprocess_data(df)
+        X_train_prep, X_test_prep, y_train, y_test, y_train_original, y_test_original, preprocessor = prepare_train_test_data(X, y, y_original)
+        print(f"Datos de entrenamiento: {X_train_prep.shape}")
+        print(f"Datos de prueba: {X_test_prep.shape}")
