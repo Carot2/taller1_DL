@@ -4,7 +4,11 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+<<<<<<< HEAD
 from data_loader import load_and_preprocess_data, preprocess_data, prepare_train_test_data
+=======
+from dataloader import load_and_preprocess_data, preprocess_data, prepare_train_test_data
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
 from model import build_model
 
 def get_callbacks(model_dir='models'):
@@ -20,10 +24,13 @@ def get_callbacks(model_dir='models'):
     # Crear directorio para guardar modelos si no existe
     os.makedirs(model_dir, exist_ok=True)
     
+<<<<<<< HEAD
     # Normalizar la ruta para evitar problemas con barras
     checkpoint_path = os.path.join(model_dir, 'best_model_checkpoint.h5')
     checkpoint_path = os.path.normpath(checkpoint_path)
     
+=======
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     # Early Stopping para detener el entrenamiento cuando no hay mejora
     early_stopping = EarlyStopping(
         monitor='val_loss',
@@ -34,7 +41,11 @@ def get_callbacks(model_dir='models'):
     
     # Model Checkpoint para guardar el mejor modelo durante el entrenamiento
     checkpoint = ModelCheckpoint(
+<<<<<<< HEAD
         filepath=checkpoint_path,
+=======
+        filepath=os.path.join(model_dir, 'best_model_checkpoint.h5'),
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
         monitor='val_loss',
         save_best_only=True,
         verbose=1
@@ -93,18 +104,26 @@ def train_model(X_train, y_train, input_shape, epochs=100, batch_size=32, valida
     
     return modelo, history
 
+<<<<<<< HEAD
 def save_model(modelo, ruta='models/modelo_alquiler.h5', include_optimizer=True):
+=======
+def save_model(modelo, ruta='models/modelo_alquiler.h5'):
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     """
     Guarda el modelo entrenado en disco.
     
     Args:
         modelo: Modelo a guardar
         ruta: Ruta donde guardar el modelo
+<<<<<<< HEAD
         include_optimizer: Si se debe incluir el optimizador
+=======
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     """
     # Crear carpeta si no existe
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     
+<<<<<<< HEAD
     # Normalizar la ruta (usar forward slashes en lugar de backslashes)
     ruta = ruta.replace('\\', '/')
     ruta = os.path.normpath(ruta)
@@ -115,6 +134,11 @@ def save_model(modelo, ruta='models/modelo_alquiler.h5', include_optimizer=True)
         print(f"Modelo guardado en: {ruta}")
     except Exception as error:
         print(f"Error al guardar el modelo: {str(error)}")
+=======
+    # Guardar modelo
+    modelo.save(ruta)
+    print(f"Modelo guardado en: {ruta}")
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
 
 def save_preprocessor(preprocessor, ruta='models/preprocessor.joblib'):
     """
@@ -129,10 +153,13 @@ def save_preprocessor(preprocessor, ruta='models/preprocessor.joblib'):
     # Crear carpeta si no existe
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     
+<<<<<<< HEAD
     # Normalizar la ruta (usar forward slashes en lugar de backslashes)
     ruta = ruta.replace('\\', '/')
     ruta = os.path.normpath(ruta)
     
+=======
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     # Guardar preprocesador
     joblib.dump(preprocessor, ruta)
     print(f"Preprocesador guardado en: {ruta}")
@@ -182,24 +209,45 @@ def main(epochs=100, batch_size=32):
     # Guardar preprocesador
     save_preprocessor(preprocessor)
     
+<<<<<<< HEAD
     # Normalizar la ruta del checkpoint
     checkpoint_path = os.path.join('models', 'best_model_checkpoint.h5')
     checkpoint_path = os.path.normpath(checkpoint_path)
     
     # Verificar que el checkpoint existe
+=======
+    # No es necesario guardar el modelo final, ya que usaremos el mejor checkpoint
+    # Pero puedes verificar que el mejor checkpoint existe
+    checkpoint_path = os.path.join('models', 'best_model_checkpoint.h5')
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     if os.path.exists(checkpoint_path):
         print(f"\n✓ Mejor modelo guardado en: {checkpoint_path}")
     else:
         print(f"\n⚠ No se encontró el archivo del mejor modelo en: {checkpoint_path}")
         print("Guardando el modelo final como respaldo...")
+<<<<<<< HEAD
         save_model(modelo, 'models/modelo_final.h5')
+=======
+        save_model(modelo, 'models/modelo_final.h5', include_optimizer=False)
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
     
     print("\n=== Entrenamiento completado con éxito ===")
     
     # Devolver elementos necesarios para evaluación posterior
+<<<<<<< HEAD
     # La solución más simple: usar el modelo final y evitar cargar el checkpoint
     print("Usando el modelo final directamente (evitando problemas de carga).")
     return modelo, preprocessor, history, (X_test, y_test, y_test_original)
+=======
+    # Intentar cargar el mejor modelo desde el checkpoint
+    try:
+        mejor_modelo = tf.keras.models.load_model(checkpoint_path)
+        print("Mejor modelo cargado correctamente para devolución.")
+        return mejor_modelo, preprocessor, history, (X_test, y_test, y_test_original)
+    except:
+        print("No se pudo cargar el mejor modelo. Devolviendo el modelo final.")
+        return modelo, preprocessor, history, (X_test, y_test, y_test_original)
+>>>>>>> 88ffc60f25e3b7744ae64e7c7762924b1369655f
 
 if __name__ == "__main__":
     modelo, preprocessor, history, test_data = main(epochs=100, batch_size=32)

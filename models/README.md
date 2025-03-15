@@ -102,11 +102,3 @@ def predict_rental_price(data, model, preprocessor):
 - Si actualiza el modelo, asegúrese de actualizar también el preprocesador para mantener la coherencia.
 - Los archivos en formato .h5 pueden ser grandes. Si el espacio es una preocupación, considere guardar solo los pesos del modelo (en lugar del modelo completo).
 
-## Rendimiento
-
-Con esta arquitectura y configuración, el modelo alcanza:
-- Error cuadrático medio (MSE): [Completar con tus valores]
-- Error absoluto medio (MAE): [Completar con tus valores]
-- Coeficiente de determinación (R²): [Completar con tus valores]
-
----
